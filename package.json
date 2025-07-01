@@ -1,5 +1,5 @@
 {
-  "name": "secure-password",
+  "name": "@voxpelli/secure-password",
   "version": "4.0.0",
   "description": "Making Password storage safer for all",
   "type": "module",
@@ -50,7 +50,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/emilbayes/secure-password.git"
+    "url": "git+https://github.com/voxpelli/secure-password.git"
   },
   "keywords": [
     "password",
@@ -63,7 +63,7 @@
   "author": "Emil Bay <github@tixz.dk>",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/emilbayes/secure-password/issues"
+    "url": "https://github.com/voxpelli/secure-password/issues"
   },
-  "homepage": "https://github.com/emilbayes/secure-password#readme"
+  "homepage": "https://github.com/voxpelli/secure-password#readme"
 }

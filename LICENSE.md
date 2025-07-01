@@ -1,4 +1,5 @@
 Copyright (c) 2017, Emil Bay <github@tixz.dk>
+Copyright (c) 2025, Pelle Wessman <pelle@kodfabrik.se>
 
 Permission to use, copy, modify, and/or distribute this software for any
 purpose with or without fee is hereby granted, provided that the above

@@ -1,6 +1,8 @@
-# `secure-password`
+# `@voxpelli/secure-password`
 
 > Making Password storage safer for all
+
+This is a maintenance fork of [`emilbayes/secure-password`](https://github.com/emilbayes/secure-password).
 
 ## Breaking changes in v5
 
@@ -21,7 +23,7 @@
 ## Install
 
 ```sh
-npm install secure-password
+npm install @voxpelli/secure-password
 ```
 
 ## Usage
