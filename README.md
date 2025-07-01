@@ -103,11 +103,6 @@ const pwd = new SecurePassword({
 })
 ```
 
-- `memlimit` (number, default: `MEMLIMIT_DEFAULT`)
-  - Memory limit for Argon2id in bytes. Higher is safer, but slower.
-- `opslimit` (number, default: `OPSLIMIT_DEFAULT`)
-  - Number of Argon2id iterations. Higher is safer, but slower.
-
 They're both constrained by the constants `MEMLIMIT_MIN` to `MEMLIMIT_MAX` and
 `OPSLIMIT_MIN` to `OPSLIMIT_MAX`. If not provided, they will be given the default
 values `MEMLIMIT_DEFAULT` and `OPSLIMIT_DEFAULT` which should be fast enough for
