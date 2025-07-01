@@ -1,5 +1,5 @@
-var sodium = require('sodium-native')
-var assert = require('nanoassert')
+const sodium = require('sodium-native')
+const assert = require('nanoassert')
 
 module.exports = SecurePassword
 SecurePassword.HASH_BYTES = sodium.crypto_pwhash_STRBYTES
@@ -24,14 +24,12 @@ function SecurePassword (opts) {
   if (!(this instanceof SecurePassword)) return new SecurePassword(opts)
   opts = opts || {}
 
-  if (opts.memlimit == null) this.memlimit = SecurePassword.MEMLIMIT_DEFAULT
-  else this.memlimit = opts.memlimit
+  this.memlimit = opts.memlimit == undefined ? SecurePassword.MEMLIMIT_DEFAULT : opts.memlimit
 
   assert(this.memlimit >= SecurePassword.MEMLIMIT_MIN, 'opts.memlimit must be at least MEMLIMIT_MIN (' + SecurePassword.MEMLIMIT_MIN + ')')
   assert(this.memlimit <= SecurePassword.MEMLIMIT_MAX, 'opts.memlimit must be at most MEMLIMIT_MAX (' + SecurePassword.MEMLIMIT_MAX + ')')
 
-  if (opts.opslimit == null) this.opslimit = SecurePassword.OPSLIMIT_DEFAULT
-  else this.opslimit = opts.opslimit
+  this.opslimit = opts.opslimit == undefined ? SecurePassword.OPSLIMIT_DEFAULT : opts.opslimit
 
   assert(this.opslimit >= SecurePassword.OPSLIMIT_MIN, 'opts.opslimit must be at least OPSLIMIT_MIN (' + SecurePassword.OPSLIMIT_MIN + ')')
   assert(this.opslimit <= SecurePassword.OPSLIMIT_MAX, 'opts.memlimit must be at most OPSLIMIT_MAX (' + SecurePassword.OPSLIMIT_MAX + ')')
@@ -43,7 +41,7 @@ SecurePassword.prototype.hashSync = function (passwordBuf) {
   assert(passwordBuf.length < SecurePassword.PASSWORD_BYTES_MAX, 'passwordBuf must be shorter than PASSWORD_BYTES_MAX (' + SecurePassword.PASSWORD_BYTES_MAX + ')')
 
   // Unsafe is okay here since sodium will overwrite all bytes
-  var hashBuf = Buffer.allocUnsafe(SecurePassword.HASH_BYTES)
+  const hashBuf = Buffer.allocUnsafe(SecurePassword.HASH_BYTES)
   sodium.crypto_pwhash_str(hashBuf, passwordBuf, this.opslimit, this.memlimit)
 
   // Note that this buffer may have trailing NULL bytes, which is by design
@@ -73,7 +71,7 @@ SecurePassword.prototype.hash = function (passwordBuf, cb) {
   assert(typeof cb === 'function', 'cb must be function')
 
   // Unsafe is okay here since sodium will overwrite all bytes
-  var hashBuf = Buffer.allocUnsafe(SecurePassword.HASH_BYTES)
+  const hashBuf = Buffer.allocUnsafe(SecurePassword.HASH_BYTES)
   sodium.crypto_pwhash_str_async(hashBuf, passwordBuf, this.opslimit, this.memlimit, function (err) {
     if (err) return cb(err)
 
@@ -141,5 +139,5 @@ SecurePassword.prototype.verify = function (passwordBuf, hashBuf, cb) {
 }
 
 function recognizedAlgorithm (hashBuf) {
-  return hashBuf.indexOf('$argon2i$') > -1 || hashBuf.indexOf('$argon2id$') > -1
+  return hashBuf.includes('$argon2i$') || hashBuf.includes('$argon2id$')
 }

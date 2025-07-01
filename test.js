@@ -1,28 +1,28 @@
-var test = require('tape')
-var securePassword = require('.')
+const test = require('tape')
+const securePassword = require('.')
 
 test('Can hash password sync', function (assert) {
-  var pwd = securePassword({
+  const pwd = securePassword({
     version: 0,
     memlimit: securePassword.MEMLIMIT_DEFAULT,
-    opslimit: securePassword.OPSLIMIT_DEFAULT
+    opslimit: securePassword.OPSLIMIT_DEFAULT,
   })
 
-  var userPassword = Buffer.from('my secrets')
+  const userPassword = Buffer.from('my secrets')
 
-  var passwordHash = pwd.hashSync(userPassword)
+  const passwordHash = pwd.hashSync(userPassword)
   assert.notOk(userPassword.equals(passwordHash))
   assert.end()
 })
 
 test('Can hash password async', function (assert) {
-  var pwd = securePassword({
+  const pwd = securePassword({
     version: 0,
     memlimit: securePassword.MEMLIMIT_DEFAULT,
-    opslimit: securePassword.OPSLIMIT_DEFAULT
+    opslimit: securePassword.OPSLIMIT_DEFAULT,
   })
 
-  var userPassword = Buffer.from('my secrets')
+  const userPassword = Buffer.from('my secrets')
 
   pwd.hash(userPassword, function (err, passwordHash) {
     assert.error(err)
@@ -32,13 +32,13 @@ test('Can hash password async', function (assert) {
 })
 
 test('Can hash password using promises', function (assert) {
-  var pwd = securePassword({
+  const pwd = securePassword({
     version: 0,
     memlimit: securePassword.MEMLIMIT_DEFAULT,
-    opslimit: securePassword.OPSLIMIT_DEFAULT
+    opslimit: securePassword.OPSLIMIT_DEFAULT,
   })
 
-  var userPassword = Buffer.from('my secrets')
+  const userPassword = Buffer.from('my secrets')
 
   pwd.hash(userPassword).then(function (passwordHash) {
     assert.notOk(userPassword.equals(passwordHash))
@@ -48,13 +48,13 @@ test('Can hash password using promises', function (assert) {
 
 test('Can hash password async simultanious', function (assert) {
   assert.plan(4)
-  var pwd = securePassword({
+  const pwd = securePassword({
     version: 0,
     memlimit: securePassword.MEMLIMIT_DEFAULT,
-    opslimit: securePassword.OPSLIMIT_DEFAULT
+    opslimit: securePassword.OPSLIMIT_DEFAULT,
   })
 
-  var userPassword = Buffer.from('my secrets')
+  const userPassword = Buffer.from('my secrets')
 
   pwd.hash(userPassword, function (err, passwordHash) {
     assert.error(err)
@@ -68,28 +68,28 @@ test('Can hash password async simultanious', function (assert) {
 })
 
 test('Can verify password (identity) sync', function (assert) {
-  var pwd = securePassword({
+  const pwd = securePassword({
     version: 0,
     memlimit: securePassword.MEMLIMIT_DEFAULT,
-    opslimit: securePassword.OPSLIMIT_DEFAULT
+    opslimit: securePassword.OPSLIMIT_DEFAULT,
   })
 
-  var userPassword = Buffer.from('my secret')
+  const userPassword = Buffer.from('my secret')
 
-  var passwordHash = pwd.hashSync(userPassword)
+  const passwordHash = pwd.hashSync(userPassword)
 
   assert.ok(pwd.verifySync(userPassword, passwordHash) === securePassword.VALID)
   assert.end()
 })
 
 test('Can verify password (identity) async', function (assert) {
-  var pwd = securePassword({
+  const pwd = securePassword({
     version: 0,
     memlimit: securePassword.MEMLIMIT_DEFAULT,
-    opslimit: securePassword.OPSLIMIT_DEFAULT
+    opslimit: securePassword.OPSLIMIT_DEFAULT,
   })
 
-  var userPassword = Buffer.from('my secret')
+  const userPassword = Buffer.from('my secret')
 
   pwd.hash(userPassword, function (err, passwordHash) {
     assert.error(err)
@@ -102,13 +102,13 @@ test('Can verify password (identity) async', function (assert) {
 })
 
 test('Can verify password (identity) using promises', function (assert) {
-  var pwd = securePassword({
+  const pwd = securePassword({
     version: 0,
     memlimit: securePassword.MEMLIMIT_DEFAULT,
-    opslimit: securePassword.OPSLIMIT_DEFAULT
+    opslimit: securePassword.OPSLIMIT_DEFAULT,
   })
 
-  var userPassword = Buffer.from('my secret')
+  const userPassword = Buffer.from('my secret')
 
   pwd
     .hash(userPassword)
@@ -123,59 +123,59 @@ test('Can verify password (identity) using promises', function (assert) {
 })
 
 test('Needs rehash sync', function (assert) {
-  var weakPwd = securePassword({
+  const weakPwd = securePassword({
     memlimit: securePassword.MEMLIMIT_DEFAULT,
-    opslimit: securePassword.OPSLIMIT_DEFAULT
+    opslimit: securePassword.OPSLIMIT_DEFAULT,
   })
 
-  var userPassword = Buffer.from('my secret')
-  var wrongPassword = Buffer.from('my secret 2')
-  var pass = Buffer.from('hello world')
-  var empty = Buffer.from('')
-  var argon2ipass = Buffer.from('JGFyZ29uMmkkdj0xOSRtPTMyNzY4LHQ9NCxwPTEkYnB2R2dVNjR1Q3h4TlF2aWYrd2Z3QSR3cXlWL1EvWi9UaDhVNUlaeEFBN0RWYjJVMWtLSG01VHhLOWE2QVlkOUlVAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=', 'base64')
-  var argon2ipassempty = Buffer.from('JGFyZ29uMmkkdj0xOSRtPTMyNzY4LHQ9NCxwPTEkN3dZV0EvbjBHQjRpa3lwSWN5UVh6USRCbjd6TnNrcW03aWNwVGNjNGl6WC9xa0liNUZBQnZVNGw2MUVCaTVtaWFZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=', 'base64')
+  const userPassword = Buffer.from('my secret')
+  const wrongPassword = Buffer.from('my secret 2')
+  const pass = Buffer.from('hello world')
+  const empty = Buffer.from('')
+  const argon2ipass = Buffer.from('JGFyZ29uMmkkdj0xOSRtPTMyNzY4LHQ9NCxwPTEkYnB2R2dVNjR1Q3h4TlF2aWYrd2Z3QSR3cXlWL1EvWi9UaDhVNUlaeEFBN0RWYjJVMWtLSG01VHhLOWE2QVlkOUlVAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=', 'base64')
+  const argon2ipassempty = Buffer.from('JGFyZ29uMmkkdj0xOSRtPTMyNzY4LHQ9NCxwPTEkN3dZV0EvbjBHQjRpa3lwSWN5UVh6USRCbjd6TnNrcW03aWNwVGNjNGl6WC9xa0liNUZBQnZVNGw2MUVCaTVtaWFZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=', 'base64')
 
-  var weakHash = weakPwd.hashSync(userPassword)
-  var weakValid = weakPwd.verifySync(userPassword, weakHash)
+  const weakHash = weakPwd.hashSync(userPassword)
+  const weakValid = weakPwd.verifySync(userPassword, weakHash)
   assert.ok(weakValid === securePassword.VALID)
   assert.notOk(weakValid === securePassword.INVALID)
   assert.notOk(weakValid === securePassword.VALID_NEEDS_REHASH)
 
-  var weakInvalid = weakPwd.verifySync(wrongPassword, weakHash)
+  const weakInvalid = weakPwd.verifySync(wrongPassword, weakHash)
   assert.notOk(weakInvalid === securePassword.VALID)
   assert.ok(weakInvalid === securePassword.INVALID)
   assert.notOk(weakInvalid === securePassword.VALID_NEEDS_REHASH)
 
-  var betterPwd = securePassword({
+  const betterPwd = securePassword({
     memlimit: securePassword.MEMLIMIT_DEFAULT + 1024,
-    opslimit: securePassword.OPSLIMIT_DEFAULT + 1
+    opslimit: securePassword.OPSLIMIT_DEFAULT + 1,
   })
 
-  var rehashValid = betterPwd.verifySync(userPassword, weakHash)
+  const rehashValid = betterPwd.verifySync(userPassword, weakHash)
 
   assert.notOk(rehashValid === securePassword.VALID)
   assert.notOk(rehashValid === securePassword.INVALID)
   assert.ok(rehashValid === securePassword.VALID_NEEDS_REHASH)
 
-  var rehashValidAlgo = betterPwd.verifySync(pass, argon2ipass)
+  const rehashValidAlgo = betterPwd.verifySync(pass, argon2ipass)
 
   assert.notOk(rehashValidAlgo === securePassword.VALID)
   assert.notOk(rehashValidAlgo === securePassword.INVALID)
   assert.ok(rehashValidAlgo === securePassword.VALID_NEEDS_REHASH)
 
-  var rehashValidAlgoEmpty = betterPwd.verifySync(empty, argon2ipassempty)
+  const rehashValidAlgoEmpty = betterPwd.verifySync(empty, argon2ipassempty)
 
   assert.notOk(rehashValidAlgoEmpty === securePassword.VALID)
   assert.notOk(rehashValidAlgoEmpty === securePassword.INVALID)
   assert.ok(rehashValidAlgoEmpty === securePassword.VALID_NEEDS_REHASH)
 
-  var betterHash = betterPwd.hashSync(userPassword)
-  var betterValid = betterPwd.verifySync(userPassword, betterHash)
+  const betterHash = betterPwd.hashSync(userPassword)
+  const betterValid = betterPwd.verifySync(userPassword, betterHash)
   assert.ok(betterValid === securePassword.VALID)
   assert.notOk(betterValid === securePassword.INVALID)
   assert.notOk(betterValid === securePassword.VALID_NEEDS_REHASH)
 
-  var betterInvalid = betterPwd.verifySync(wrongPassword, betterHash)
+  const betterInvalid = betterPwd.verifySync(wrongPassword, betterHash)
   assert.notOk(betterInvalid === securePassword.VALID)
   assert.ok(betterInvalid === securePassword.INVALID)
   assert.notOk(betterInvalid === securePassword.VALID_NEEDS_REHASH)
@@ -184,22 +184,22 @@ test('Needs rehash sync', function (assert) {
 
 test('Needs rehash async', function (assert) {
   assert.plan(37)
-  var weakPwd = securePassword({
+  const weakPwd = securePassword({
     memlimit: securePassword.MEMLIMIT_DEFAULT,
-    opslimit: securePassword.OPSLIMIT_DEFAULT
+    opslimit: securePassword.OPSLIMIT_DEFAULT,
   })
 
-  var betterPwd = securePassword({
+  const betterPwd = securePassword({
     memlimit: securePassword.MEMLIMIT_DEFAULT + 1024,
-    opslimit: securePassword.OPSLIMIT_DEFAULT + 1
+    opslimit: securePassword.OPSLIMIT_DEFAULT + 1,
   })
 
-  var userPassword = Buffer.from('my secret')
-  var wrongPassword = Buffer.from('my secret 2')
-  var pass = Buffer.from('hello world')
-  var empty = Buffer.from('')
-  var argon2ipass = Buffer.from('JGFyZ29uMmkkdj0xOSRtPTMyNzY4LHQ9NCxwPTEkYnB2R2dVNjR1Q3h4TlF2aWYrd2Z3QSR3cXlWL1EvWi9UaDhVNUlaeEFBN0RWYjJVMWtLSG01VHhLOWE2QVlkOUlVAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=', 'base64')
-  var argon2ipassempty = Buffer.from('JGFyZ29uMmkkdj0xOSRtPTMyNzY4LHQ9NCxwPTEkN3dZV0EvbjBHQjRpa3lwSWN5UVh6USRCbjd6TnNrcW03aWNwVGNjNGl6WC9xa0liNUZBQnZVNGw2MUVCaTVtaWFZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=', 'base64')
+  const userPassword = Buffer.from('my secret')
+  const wrongPassword = Buffer.from('my secret 2')
+  const pass = Buffer.from('hello world')
+  const empty = Buffer.from('')
+  const argon2ipass = Buffer.from('JGFyZ29uMmkkdj0xOSRtPTMyNzY4LHQ9NCxwPTEkYnB2R2dVNjR1Q3h4TlF2aWYrd2Z3QSR3cXlWL1EvWi9UaDhVNUlaeEFBN0RWYjJVMWtLSG01VHhLOWE2QVlkOUlVAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=', 'base64')
+  const argon2ipassempty = Buffer.from('JGFyZ29uMmkkdj0xOSRtPTMyNzY4LHQ9NCxwPTEkN3dZV0EvbjBHQjRpa3lwSWN5UVh6USRCbjd6TnNrcW03aWNwVGNjNGl6WC9xa0liNUZBQnZVNGw2MUVCaTVtaWFZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=', 'base64')
 
   weakPwd.hash(userPassword, function (err, weakHash) {
     assert.error(err, 'hash not error')
@@ -266,12 +266,12 @@ test('Needs rehash async', function (assert) {
 })
 
 test('Can handle invalid hash sync', function (assert) {
-  var pwd = securePassword()
+  const pwd = securePassword()
 
-  var userPassword = Buffer.from('my secret')
-  var invalidHash = Buffer.allocUnsafe(securePassword.HASH_BYTES)
+  const userPassword = Buffer.from('my secret')
+  const invalidHash = Buffer.allocUnsafe(securePassword.HASH_BYTES)
 
-  var unrecognizedHash = pwd.verifySync(userPassword, invalidHash)
+  const unrecognizedHash = pwd.verifySync(userPassword, invalidHash)
   assert.ok(unrecognizedHash === securePassword.INVALID_UNRECOGNIZED_HASH)
   assert.notOk(unrecognizedHash === securePassword.INVALID)
   assert.notOk(unrecognizedHash === securePassword.VALID)
@@ -280,10 +280,10 @@ test('Can handle invalid hash sync', function (assert) {
 })
 
 test('Can handle invalid hash async', function (assert) {
-  var pwd = securePassword()
+  const pwd = securePassword()
 
-  var userPassword = Buffer.from('my secret')
-  var invalidHash = Buffer.allocUnsafe(securePassword.HASH_BYTES)
+  const userPassword = Buffer.from('my secret')
+  const invalidHash = Buffer.allocUnsafe(securePassword.HASH_BYTES)
 
   pwd.verify(userPassword, invalidHash, function (err, unrecognizedHash) {
     assert.error(err)
