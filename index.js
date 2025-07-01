@@ -91,10 +91,10 @@ export class SecurePassword {
   }
 
   /**
-   * Hash a password buffer asynchronously (Promise or callback).
+   * Hash a password buffer asynchronously.
    *
    * @param {Buffer} passwordBuf - The password as a Buffer.
-   * @returns {Promise<Buffer>} Promise if no callback is given.
+   * @returns {Promise<Buffer>}
    */
   async hash (passwordBuf) {
     if (!Buffer.isBuffer(passwordBuf)) throw new TypeError('passwordBuf must be Buffer')
@@ -140,11 +140,11 @@ export class SecurePassword {
   }
 
   /**
-   * Verify a password against a hash asynchronously (Promise or callback).
+   * Verify a password against a hash asynchronously.
    *
    * @param {Buffer} passwordBuf - The password as a Buffer.
    * @param {Buffer} hashBuf - The hash as a Buffer.
-   * @returns {Promise<VerificationResult>} Promise if no callback is given.
+   * @returns {Promise<VerificationResult>}
    */
   async verify (passwordBuf, hashBuf) {
     if (!Buffer.isBuffer(passwordBuf)) throw new TypeError('passwordBuf must be Buffer')

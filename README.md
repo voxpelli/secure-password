@@ -125,8 +125,7 @@ monitored.
 
 Takes Buffer `passwordBuf` and hashes it. Returns a Buffer with the hash.
 The hashing is done by a seperate worker as to not block the event loop,
-so normal execution and I/O can continue. The callback is invoked with a
-potential error, or the Buffer `hash`.
+so normal execution and I/O can continue.
 
 - `passwordBuf` must be a Buffer of length between `PASSWORD_BYTES_MIN` and
   `PASSWORD_BYTES_MAX`.
@@ -139,7 +138,6 @@ Same as `pwd.hash()`, but the hashing is done on the same thread as
 the event loop, therefore normal execution and I/O will be blocked.
 
 ### `await pwd.verify(passwordBuf, hashBuf)`
-
 
 Takes `passwordBuf`, hashes it and then safely compares it to the `hashBuf`.
 The hashing is done by a seperate worker as to not block the event loop, so
