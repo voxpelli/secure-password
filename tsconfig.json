@@ -4,5 +4,8 @@
     "eslint.config.js",
     "index.js",
     "test.js"
-  ]
+  ],
+  "compilerOptions": {
+    "skipLibCheck": true
+  }
 }
