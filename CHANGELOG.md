@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## Unreleased (v5.0.0)
+## v5.0.0
 
 ### Breaking changes
 
