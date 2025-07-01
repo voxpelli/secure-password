@@ -1,7 +1,6 @@
 import { promisify } from 'node:util'
 
 import sodium from 'sodium-native'
-import assert from 'nanoassert'
 
 const cryptoPwhashStrAsync = promisify(sodium.crypto_pwhash_str_async)
 const cryptoPwhashStrVerifyAsync = promisify(sodium.crypto_pwhash_str_verify_async)
@@ -60,11 +59,11 @@ export class SecurePassword {
       opslimit = OPSLIMIT_DEFAULT,
     } = opts
 
-    assert(memlimit >= MEMLIMIT_MIN, 'opts.memlimit must be at least MEMLIMIT_MIN (' + MEMLIMIT_MIN + ')')
-    assert(memlimit <= MEMLIMIT_MAX, 'opts.memlimit must be at most MEMLIMIT_MAX (' + MEMLIMIT_MAX + ')')
+    if (memlimit < MEMLIMIT_MIN) throw new Error('opts.memlimit must be at least MEMLIMIT_MIN (' + MEMLIMIT_MIN + ')')
+    if (memlimit > MEMLIMIT_MAX) throw new Error('opts.memlimit must be at most MEMLIMIT_MAX (' + MEMLIMIT_MAX + ')')
 
-    assert(opslimit >= OPSLIMIT_MIN, 'opts.opslimit must be at least OPSLIMIT_MIN (' + OPSLIMIT_MIN + ')')
-    assert(opslimit <= OPSLIMIT_MAX, 'opts.opslimit must be at most OPSLIMIT_MAX (' + OPSLIMIT_MAX + ')')
+    if (opslimit < OPSLIMIT_MIN) throw new Error('opts.opslimit must be at least OPSLIMIT_MIN (' + OPSLIMIT_MIN + ')')
+    if (opslimit > OPSLIMIT_MAX) throw new Error('opts.opslimit must be at most OPSLIMIT_MAX (' + OPSLIMIT_MAX + ')')
 
     this.#memlimit = memlimit
     this.#opslimit = opslimit
@@ -77,9 +76,9 @@ export class SecurePassword {
    * @returns {Buffer} The resulting hash Buffer.
    */
   hashSync (passwordBuf) {
-    assert(Buffer.isBuffer(passwordBuf), 'passwordBuf must be Buffer')
-    assert(passwordBuf.length >= PASSWORD_BYTES_MIN, 'passwordBuf must be at least PASSWORD_BYTES_MIN (' + PASSWORD_BYTES_MIN + ')')
-    assert(passwordBuf.length < PASSWORD_BYTES_MAX, 'passwordBuf must be shorter than PASSWORD_BYTES_MAX (' + PASSWORD_BYTES_MAX + ')')
+    if (!Buffer.isBuffer(passwordBuf)) throw new TypeError('passwordBuf must be Buffer')
+    if (passwordBuf.length < PASSWORD_BYTES_MIN) throw new Error('passwordBuf must be at least PASSWORD_BYTES_MIN (' + PASSWORD_BYTES_MIN + ')')
+    if (passwordBuf.length >= PASSWORD_BYTES_MAX) throw new Error('passwordBuf must be shorter than PASSWORD_BYTES_MAX (' + PASSWORD_BYTES_MAX + ')')
 
     // Unsafe is okay here since sodium will overwrite all bytes
     const hashBuf = Buffer.allocUnsafe(HASH_BYTES)
@@ -98,9 +97,9 @@ export class SecurePassword {
    * @returns {Promise<Buffer>} Promise if no callback is given.
    */
   async hash (passwordBuf) {
-    assert(Buffer.isBuffer(passwordBuf), 'passwordBuf must be Buffer')
-    assert(passwordBuf.length >= PASSWORD_BYTES_MIN, 'passwordBuf must be at least PASSWORD_BYTES_MIN (' + PASSWORD_BYTES_MIN + ')')
-    assert(passwordBuf.length < PASSWORD_BYTES_MAX, 'passwordBuf must be shorter than PASSWORD_BYTES_MAX (' + PASSWORD_BYTES_MAX + ')')
+    if (!Buffer.isBuffer(passwordBuf)) throw new TypeError('passwordBuf must be Buffer')
+    if (passwordBuf.length < PASSWORD_BYTES_MIN) throw new Error('passwordBuf must be at least PASSWORD_BYTES_MIN (' + PASSWORD_BYTES_MIN + ')')
+    if (passwordBuf.length >= PASSWORD_BYTES_MAX) throw new Error('passwordBuf must be shorter than PASSWORD_BYTES_MAX (' + PASSWORD_BYTES_MAX + ')')
 
     // Unsafe is okay here since sodium will overwrite all bytes
     const hashBuf = Buffer.allocUnsafe(HASH_BYTES)
@@ -118,12 +117,12 @@ export class SecurePassword {
    * @returns {VerificationResult} One of INVALID, VALID, VALID_NEEDS_REHASH, or INVALID_UNRECOGNIZED_HASH.
    */
   verifySync (passwordBuf, hashBuf) {
-    assert(Buffer.isBuffer(passwordBuf), 'passwordBuf must be Buffer')
-    assert(passwordBuf.length >= PASSWORD_BYTES_MIN, 'passwordBuf must be at least PASSWORD_BYTES_MIN (' + PASSWORD_BYTES_MIN + ')')
-    assert(passwordBuf.length < PASSWORD_BYTES_MAX, 'passwordBuf must be shorter than PASSWORD_BYTES_MAX (' + PASSWORD_BYTES_MAX + ')')
+    if (!Buffer.isBuffer(passwordBuf)) throw new TypeError('passwordBuf must be Buffer')
+    if (passwordBuf.length < PASSWORD_BYTES_MIN) throw new Error('passwordBuf must be at least PASSWORD_BYTES_MIN (' + PASSWORD_BYTES_MIN + ')')
+    if (passwordBuf.length >= PASSWORD_BYTES_MAX) throw new Error('passwordBuf must be shorter than PASSWORD_BYTES_MAX (' + PASSWORD_BYTES_MAX + ')')
 
-    assert(Buffer.isBuffer(hashBuf), 'hashBuf must be Buffer')
-    assert(hashBuf.length === HASH_BYTES, 'hashBuf must be HASH_BYTES (' + HASH_BYTES + ')')
+    if (!Buffer.isBuffer(hashBuf)) throw new TypeError('hashBuf must be Buffer')
+    if (hashBuf.length !== HASH_BYTES) throw new Error('hashBuf must be HASH_BYTES (' + HASH_BYTES + ')')
 
     if (recognizedAlgorithm(hashBuf) === false) {
       return INVALID_UNRECOGNIZED_HASH
@@ -148,12 +147,12 @@ export class SecurePassword {
    * @returns {Promise<VerificationResult>} Promise if no callback is given.
    */
   async verify (passwordBuf, hashBuf) {
-    assert(Buffer.isBuffer(passwordBuf), 'passwordBuf must be Buffer')
-    assert(passwordBuf.length >= PASSWORD_BYTES_MIN, 'passwordBuf must be at least PASSWORD_BYTES_MIN (' + PASSWORD_BYTES_MIN + ')')
-    assert(passwordBuf.length < PASSWORD_BYTES_MAX, 'passwordBuf must be shorter than PASSWORD_BYTES_MAX (' + PASSWORD_BYTES_MAX + ')')
+    if (!Buffer.isBuffer(passwordBuf)) throw new TypeError('passwordBuf must be Buffer')
+    if (passwordBuf.length < PASSWORD_BYTES_MIN) throw new Error('passwordBuf must be at least PASSWORD_BYTES_MIN (' + PASSWORD_BYTES_MIN + ')')
+    if (passwordBuf.length >= PASSWORD_BYTES_MAX) throw new Error('passwordBuf must be shorter than PASSWORD_BYTES_MAX (' + PASSWORD_BYTES_MAX + ')')
 
-    assert(Buffer.isBuffer(hashBuf), 'hashBuf must be Buffer')
-    assert(hashBuf.length === HASH_BYTES, 'hashBuf must be HASH_BYTES (' + HASH_BYTES + ')')
+    if (!Buffer.isBuffer(hashBuf)) throw new TypeError('hashBuf must be Buffer')
+    if (hashBuf.length !== HASH_BYTES) throw new Error('hashBuf must be HASH_BYTES (' + HASH_BYTES + ')')
 
     if (recognizedAlgorithm(hashBuf) === false) {
       return INVALID_UNRECOGNIZED_HASH
