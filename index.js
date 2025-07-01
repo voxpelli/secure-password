@@ -1,7 +1,37 @@
+import { promisify } from 'node:util'
+
 import sodium from 'sodium-native'
 import assert from 'nanoassert'
 
+const cryptoPwhashStrAsync = promisify(sodium.crypto_pwhash_str_async)
+const cryptoPwhashStrVerifyAsync = promisify(sodium.crypto_pwhash_str_verify_async)
+const cryptoPwhashStrNeedsRehash = sodium.crypto_pwhash_str_needs_rehash
+
+/**
+ * Checks if a hash buffer uses a recognized Argon2 algorithm.
+ *
+ * @param {Buffer} hashBuf
+ * @returns {boolean}
+ */
+function recognizedAlgorithm (hashBuf) {
+  return hashBuf.includes('$argon2i$') || hashBuf.includes('$argon2id$')
+}
+
+/**
+ * @typedef SecurePasswordOptions
+ * @property {number} [memlimit] - Memory limit for hashing (default: SecurePassword.MEMLIMIT_DEFAULT)
+ * @property {number} [opslimit] - Operations limit for hashing (default: SecurePassword.OPSLIMIT_DEFAULT)
+ */
+
+/**
+ * Argon2 password hashing and verification utility using sodium-native.
+ *
+ * @class
+ */
 export class SecurePassword {
+  /**
+   * @param {SecurePasswordOptions} [opts]
+   */
   constructor (opts = {}) {
     const {
       memlimit = SecurePassword.MEMLIMIT_DEFAULT,
@@ -18,6 +48,12 @@ export class SecurePassword {
     this.opslimit = opslimit
   }
 
+  /**
+   * Hash a password buffer synchronously.
+   *
+   * @param {Buffer} passwordBuf - The password as a Buffer.
+   * @returns {Buffer} The resulting hash Buffer.
+   */
   hashSync (passwordBuf) {
     assert(Buffer.isBuffer(passwordBuf), 'passwordBuf must be Buffer')
     assert(passwordBuf.length >= SecurePassword.PASSWORD_BYTES_MIN, 'passwordBuf must be at least PASSWORD_BYTES_MIN (' + SecurePassword.PASSWORD_BYTES_MIN + ')')
@@ -33,35 +69,32 @@ export class SecurePassword {
     return hashBuf
   }
 
-  hash (passwordBuf, cb) {
-    // support promises
-    if (cb === undefined) {
-      return new Promise((resolve, reject) => {
-        this.hash(passwordBuf, function (err, hashBuf) {
-          if (err) {
-            reject(err)
-            return
-          }
-
-          resolve(hashBuf)
-        })
-      })
-    }
-
+  /**
+   * Hash a password buffer asynchronously (Promise or callback).
+   *
+   * @param {Buffer} passwordBuf - The password as a Buffer.
+   * @returns {Promise<Buffer>} Promise if no callback is given.
+   */
+  async hash (passwordBuf) {
     assert(Buffer.isBuffer(passwordBuf), 'passwordBuf must be Buffer')
     assert(passwordBuf.length >= SecurePassword.PASSWORD_BYTES_MIN, 'passwordBuf must be at least PASSWORD_BYTES_MIN (' + SecurePassword.PASSWORD_BYTES_MIN + ')')
     assert(passwordBuf.length < SecurePassword.PASSWORD_BYTES_MAX, 'passwordBuf must be shorter than PASSWORD_BYTES_MAX (' + SecurePassword.PASSWORD_BYTES_MAX + ')')
-    assert(typeof cb === 'function', 'cb must be function')
 
     // Unsafe is okay here since sodium will overwrite all bytes
     const hashBuf = Buffer.allocUnsafe(SecurePassword.HASH_BYTES)
-    sodium.crypto_pwhash_str_async(hashBuf, passwordBuf, this.opslimit, this.memlimit, function (err) {
-      if (err) return cb(err)
 
-      return cb(null, hashBuf)
-    })
+    await cryptoPwhashStrAsync(hashBuf, passwordBuf, this.opslimit, this.memlimit)
+
+    return hashBuf
   }
 
+  /**
+   * Verify a password against a hash synchronously.
+   *
+   * @param {Buffer} passwordBuf - The password as a Buffer.
+   * @param {Buffer} hashBuf - The hash as a Buffer.
+   * @returns {symbol} One of SecurePassword.INVALID, VALID, VALID_NEEDS_REHASH, or INVALID_UNRECOGNIZED_HASH.
+   */
   verifySync (passwordBuf, hashBuf) {
     assert(Buffer.isBuffer(passwordBuf), 'passwordBuf must be Buffer')
     assert(passwordBuf.length >= SecurePassword.PASSWORD_BYTES_MIN, 'passwordBuf must be at least PASSWORD_BYTES_MIN (' + SecurePassword.PASSWORD_BYTES_MIN + ')')
@@ -83,63 +116,61 @@ export class SecurePassword {
     return SecurePassword.VALID
   }
 
-  verify (passwordBuf, hashBuf, cb) {
-    // support promises
-    if (cb === undefined) {
-      return new Promise((resolve, reject) => {
-        this.verify(passwordBuf, hashBuf, function (err, bool) {
-          if (err) {
-            reject(err)
-            return
-          }
-
-          resolve(bool)
-        })
-      })
-    }
-
+  /**
+   * Verify a password against a hash asynchronously (Promise or callback).
+   *
+   * @param {Buffer} passwordBuf - The password as a Buffer.
+   * @param {Buffer} hashBuf - The hash as a Buffer.
+   * @returns {Promise<symbol>} Promise if no callback is given.
+   */
+  async verify (passwordBuf, hashBuf) {
     assert(Buffer.isBuffer(passwordBuf), 'passwordBuf must be Buffer')
     assert(passwordBuf.length >= SecurePassword.PASSWORD_BYTES_MIN, 'passwordBuf must be at least PASSWORD_BYTES_MIN (' + SecurePassword.PASSWORD_BYTES_MIN + ')')
     assert(passwordBuf.length < SecurePassword.PASSWORD_BYTES_MAX, 'passwordBuf must be shorter than PASSWORD_BYTES_MAX (' + SecurePassword.PASSWORD_BYTES_MAX + ')')
-    assert(typeof cb === 'function', 'cb must be function')
 
     assert(Buffer.isBuffer(hashBuf), 'hashBuf must be Buffer')
     assert(hashBuf.length === SecurePassword.HASH_BYTES, 'hashBuf must be HASH_BYTES (' + SecurePassword.HASH_BYTES + ')')
 
-    if (recognizedAlgorithm(hashBuf) === false) return process.nextTick(cb, null, SecurePassword.INVALID_UNRECOGNIZED_HASH)
+    if (recognizedAlgorithm(hashBuf) === false) {
+      return SecurePassword.INVALID_UNRECOGNIZED_HASH
+    }
 
-    sodium.crypto_pwhash_str_verify_async(hashBuf, passwordBuf, function (err, bool) {
-      if (err) return cb(err)
+    const bool = await cryptoPwhashStrVerifyAsync(hashBuf, passwordBuf)
 
-      if (bool === false) return cb(null, SecurePassword.INVALID)
+    if (bool === false) {
+      return SecurePassword.INVALID
+    }
+    if (cryptoPwhashStrNeedsRehash(hashBuf, this.opslimit, this.memlimit)) {
+      return SecurePassword.VALID_NEEDS_REHASH
+    }
 
-      if (sodium.crypto_pwhash_str_needs_rehash(hashBuf, this.opslimit, this.memlimit)) {
-        return cb(null, SecurePassword.VALID_NEEDS_REHASH)
-      }
-
-      return cb(null, SecurePassword.VALID)
-    }.bind(this))
+    return SecurePassword.VALID
   }
-}
 
-SecurePassword.HASH_BYTES = sodium.crypto_pwhash_STRBYTES
-
-SecurePassword.PASSWORD_BYTES_MIN = sodium.crypto_pwhash_PASSWD_MIN
-SecurePassword.PASSWORD_BYTES_MAX = sodium.crypto_pwhash_PASSWD_MAX
-
-SecurePassword.MEMLIMIT_MIN = sodium.crypto_pwhash_MEMLIMIT_MIN
-SecurePassword.MEMLIMIT_MAX = sodium.crypto_pwhash_MEMLIMIT_MAX
-SecurePassword.OPSLIMIT_MIN = sodium.crypto_pwhash_OPSLIMIT_MIN
-SecurePassword.OPSLIMIT_MAX = sodium.crypto_pwhash_OPSLIMIT_MAX
-
-SecurePassword.MEMLIMIT_DEFAULT = sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE
-SecurePassword.OPSLIMIT_DEFAULT = sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE
-
-SecurePassword.INVALID_UNRECOGNIZED_HASH = Symbol('INVALID_UNRECOGNIZED_HASH')
-SecurePassword.INVALID = Symbol('INVALID')
-SecurePassword.VALID = Symbol('VALID')
-SecurePassword.VALID_NEEDS_REHASH = Symbol('VALID_NEEDS_REHASH')
-
-function recognizedAlgorithm (hashBuf) {
-  return hashBuf.includes('$argon2i$') || hashBuf.includes('$argon2id$')
+  /** @type {number} */
+  static HASH_BYTES = sodium.crypto_pwhash_STRBYTES
+  /** @type {number} */
+  static PASSWORD_BYTES_MIN = sodium.crypto_pwhash_PASSWD_MIN
+  /** @type {number} */
+  static PASSWORD_BYTES_MAX = sodium.crypto_pwhash_PASSWD_MAX
+  /** @type {number} */
+  static MEMLIMIT_MIN = sodium.crypto_pwhash_MEMLIMIT_MIN
+  /** @type {number} */
+  static MEMLIMIT_MAX = sodium.crypto_pwhash_MEMLIMIT_MAX
+  /** @type {number} */
+  static OPSLIMIT_MIN = sodium.crypto_pwhash_OPSLIMIT_MIN
+  /** @type {number} */
+  static OPSLIMIT_MAX = sodium.crypto_pwhash_OPSLIMIT_MAX
+  /** @type {number} */
+  static MEMLIMIT_DEFAULT = sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE
+  /** @type {number} */
+  static OPSLIMIT_DEFAULT = sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE
+  /** @type {symbol} */
+  static INVALID_UNRECOGNIZED_HASH = Symbol('INVALID_UNRECOGNIZED_HASH')
+  /** @type {symbol} */
+  static INVALID = Symbol('INVALID')
+  /** @type {symbol} */
+  static VALID = Symbol('VALID')
+  /** @type {symbol} */
+  static VALID_NEEDS_REHASH = Symbol('VALID_NEEDS_REHASH')
 }
