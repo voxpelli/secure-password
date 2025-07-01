@@ -3,14 +3,49 @@
   "version": "4.0.0",
   "description": "Making Password storage safer for all",
   "main": "index.js",
+  "types": "index.d.ts",
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "index.d.ts.map"
+  ],
+  "engines": {
+    "node": "^20.11.0 || >=22.0.0"
+  },
   "dependencies": {
     "nanoassert": "^1.0.0",
     "sodium-native": "^3.1.1"
   },
   "devDependencies": {
-    "tape": "^4.6.3"
+    "@types/node": "^20.19.1",
+    "@voxpelli/eslint-config": "^23.0.0",
+    "@voxpelli/tsconfig": "^15.1.2",
+    "eslint": "^9.29.0",
+    "husky": "^9.1.7",
+    "installed-check": "^9.3.0",
+    "knip": "^5.61.0",
+    "npm-run-all2": "^8.0.1",
+    "tape": "^4.6.3",
+    "type-coverage": "^2.29.7",
+    "typescript": "~5.8.3"
   },
   "scripts": {
+    "build:0": "run-s clean",
+    "build:1-declaration": "tsc -p declaration.tsconfig.json",
+    "build": "run-s build:*",
+    "check:installed-check": "installed-check",
+    "check:knip": "knip",
+    "check:lint": "eslint",
+    "check:tsc": "tsc",
+    "check:type-coverage": "type-coverage --detail --strict --at-least 99 --ignore-files 'test/*'",
+    "check": "run-s clean && run-p check:*",
+    "clean:declarations-top": "rm -rf $(find . -maxdepth 1 -type f -name '*.d.ts*' ! -name 'index.d.ts')",
+    "clean:declarations-lib": "rm -rf $(find lib -type f -name '*.d.ts*' ! -name '*-types.d.ts')",
+    "clean": "run-p clean:*",
+    "prepare": "husky",
+    "prepublishOnly": "run-s build",
+    "test:tape": "tape test.js",
+    "test-ci": "run-s test:*",
     "test": "tape test.js"
   },
   "repository": {
