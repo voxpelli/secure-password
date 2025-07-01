@@ -3,15 +3,19 @@ import assert from 'nanoassert'
 
 export class SecurePassword {
   constructor (opts = {}) {
-    this.memlimit = opts.memlimit == undefined ? SecurePassword.MEMLIMIT_DEFAULT : opts.memlimit
+    const {
+      memlimit = SecurePassword.MEMLIMIT_DEFAULT,
+      opslimit = SecurePassword.OPSLIMIT_DEFAULT,
+    } = opts
 
-    assert(this.memlimit >= SecurePassword.MEMLIMIT_MIN, 'opts.memlimit must be at least MEMLIMIT_MIN (' + SecurePassword.MEMLIMIT_MIN + ')')
-    assert(this.memlimit <= SecurePassword.MEMLIMIT_MAX, 'opts.memlimit must be at most MEMLIMIT_MAX (' + SecurePassword.MEMLIMIT_MAX + ')')
+    assert(memlimit >= SecurePassword.MEMLIMIT_MIN, 'opts.memlimit must be at least MEMLIMIT_MIN (' + SecurePassword.MEMLIMIT_MIN + ')')
+    assert(memlimit <= SecurePassword.MEMLIMIT_MAX, 'opts.memlimit must be at most MEMLIMIT_MAX (' + SecurePassword.MEMLIMIT_MAX + ')')
 
-    this.opslimit = opts.opslimit == undefined ? SecurePassword.OPSLIMIT_DEFAULT : opts.opslimit
+    assert(opslimit >= SecurePassword.OPSLIMIT_MIN, 'opts.opslimit must be at least OPSLIMIT_MIN (' + SecurePassword.OPSLIMIT_MIN + ')')
+    assert(opslimit <= SecurePassword.OPSLIMIT_MAX, 'opts.memlimit must be at most OPSLIMIT_MAX (' + SecurePassword.OPSLIMIT_MAX + ')')
 
-    assert(this.opslimit >= SecurePassword.OPSLIMIT_MIN, 'opts.opslimit must be at least OPSLIMIT_MIN (' + SecurePassword.OPSLIMIT_MIN + ')')
-    assert(this.opslimit <= SecurePassword.OPSLIMIT_MAX, 'opts.memlimit must be at most OPSLIMIT_MAX (' + SecurePassword.OPSLIMIT_MAX + ')')
+    this.memlimit = memlimit
+    this.opslimit = opslimit
   }
 
   hashSync (passwordBuf) {
