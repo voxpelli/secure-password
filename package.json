@@ -13,11 +13,14 @@
     "node": "^20.11.0 || >=22.0.0"
   },
   "dependencies": {
+    "@types/nanoassert": "^2.0.3",
+    "@types/sodium-native": "^2.3.9",
     "nanoassert": "^1.0.0",
     "sodium-native": "^3.1.1"
   },
   "devDependencies": {
     "@types/node": "^20.19.1",
+    "@types/tape": "^5.8.1",
     "@voxpelli/eslint-config": "^23.0.0",
     "@voxpelli/tsconfig": "^15.1.2",
     "eslint": "^9.29.0",
