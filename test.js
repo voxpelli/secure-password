@@ -57,7 +57,7 @@ test('Can verify password (identity) sync', /** @param {TestContext} t */ (t) =>
   const userPassword = Buffer.from('my secret')
   const passwordHash = pwd.hashSync(userPassword)
 
-  t.assert.ok(pwd.verifySync(userPassword, passwordHash) === SecurePassword.VALID)
+  t.assert.strictEqual(pwd.verifySync(userPassword, passwordHash), SecurePassword.VALID)
 })
 
 test('Can verify password (identity) using promises', /** @param {TestContext} t */ async (t) => {
@@ -70,7 +70,7 @@ test('Can verify password (identity) using promises', /** @param {TestContext} t
   const passwordHash = await pwd.hash(userPassword)
   const bool = await pwd.verify(userPassword, passwordHash)
 
-  t.assert.ok(bool === SecurePassword.VALID)
+  t.assert.strictEqual(bool, SecurePassword.VALID)
 })
 
 test('Needs rehash sync', /** @param {TestContext} t */ (t) => {
@@ -88,15 +88,15 @@ test('Needs rehash sync', /** @param {TestContext} t */ (t) => {
   const weakHash = weakPwd.hashSync(userPassword)
   const weakValid = weakPwd.verifySync(userPassword, weakHash)
 
-  t.assert.ok(weakValid === SecurePassword.VALID)
-  t.assert.ok(weakValid !== SecurePassword.INVALID)
-  t.assert.ok(weakValid !== SecurePassword.VALID_NEEDS_REHASH)
+  t.assert.strictEqual(weakValid, SecurePassword.VALID)
+  t.assert.notStrictEqual(weakValid, SecurePassword.INVALID)
+  t.assert.notStrictEqual(weakValid, SecurePassword.VALID_NEEDS_REHASH)
 
   const weakInvalid = weakPwd.verifySync(wrongPassword, weakHash)
 
-  t.assert.ok(weakInvalid !== SecurePassword.VALID)
-  t.assert.ok(weakInvalid === SecurePassword.INVALID)
-  t.assert.ok(weakInvalid !== SecurePassword.VALID_NEEDS_REHASH)
+  t.assert.notStrictEqual(weakInvalid, SecurePassword.VALID)
+  t.assert.strictEqual(weakInvalid, SecurePassword.INVALID)
+  t.assert.notStrictEqual(weakInvalid, SecurePassword.VALID_NEEDS_REHASH)
 
   const betterPwd = new SecurePassword({
     memlimit: SecurePassword.MEMLIMIT_DEFAULT + 1024,
@@ -105,34 +105,34 @@ test('Needs rehash sync', /** @param {TestContext} t */ (t) => {
 
   const rehashValid = betterPwd.verifySync(userPassword, weakHash)
 
-  t.assert.ok(rehashValid !== SecurePassword.VALID)
-  t.assert.ok(rehashValid !== SecurePassword.INVALID)
-  t.assert.ok(rehashValid === SecurePassword.VALID_NEEDS_REHASH)
+  t.assert.notStrictEqual(rehashValid, SecurePassword.VALID)
+  t.assert.notStrictEqual(rehashValid, SecurePassword.INVALID)
+  t.assert.strictEqual(rehashValid, SecurePassword.VALID_NEEDS_REHASH)
 
   const rehashValidAlgo = betterPwd.verifySync(pass, argon2ipass)
 
-  t.assert.ok(rehashValidAlgo !== SecurePassword.VALID)
-  t.assert.ok(rehashValidAlgo !== SecurePassword.INVALID)
-  t.assert.ok(rehashValidAlgo === SecurePassword.VALID_NEEDS_REHASH)
+  t.assert.notStrictEqual(rehashValidAlgo, SecurePassword.VALID)
+  t.assert.notStrictEqual(rehashValidAlgo, SecurePassword.INVALID)
+  t.assert.strictEqual(rehashValidAlgo, SecurePassword.VALID_NEEDS_REHASH)
 
   const rehashValidAlgoEmpty = betterPwd.verifySync(empty, argon2ipassempty)
 
-  t.assert.ok(rehashValidAlgoEmpty !== SecurePassword.VALID)
-  t.assert.ok(rehashValidAlgoEmpty !== SecurePassword.INVALID)
-  t.assert.ok(rehashValidAlgoEmpty === SecurePassword.VALID_NEEDS_REHASH)
+  t.assert.notStrictEqual(rehashValidAlgoEmpty, SecurePassword.VALID)
+  t.assert.notStrictEqual(rehashValidAlgoEmpty, SecurePassword.INVALID)
+  t.assert.strictEqual(rehashValidAlgoEmpty, SecurePassword.VALID_NEEDS_REHASH)
 
   const betterHash = betterPwd.hashSync(userPassword)
   const betterValid = betterPwd.verifySync(userPassword, betterHash)
 
-  t.assert.ok(betterValid === SecurePassword.VALID)
-  t.assert.ok(betterValid !== SecurePassword.INVALID)
-  t.assert.ok(betterValid !== SecurePassword.VALID_NEEDS_REHASH)
+  t.assert.strictEqual(betterValid, SecurePassword.VALID)
+  t.assert.notStrictEqual(betterValid, SecurePassword.INVALID)
+  t.assert.notStrictEqual(betterValid, SecurePassword.VALID_NEEDS_REHASH)
 
   const betterInvalid = betterPwd.verifySync(wrongPassword, betterHash)
 
-  t.assert.ok(betterInvalid !== SecurePassword.VALID)
-  t.assert.ok(betterInvalid === SecurePassword.INVALID)
-  t.assert.ok(betterInvalid !== SecurePassword.VALID_NEEDS_REHASH)
+  t.assert.notStrictEqual(betterInvalid, SecurePassword.VALID)
+  t.assert.strictEqual(betterInvalid, SecurePassword.INVALID)
+  t.assert.notStrictEqual(betterInvalid, SecurePassword.VALID_NEEDS_REHASH)
 })
 
 test('Can handle invalid hash sync', /** @param {TestContext} t */ (t) => {
@@ -143,10 +143,10 @@ test('Can handle invalid hash sync', /** @param {TestContext} t */ (t) => {
 
   const unrecognizedHash = pwd.verifySync(userPassword, invalidHash)
 
-  t.assert.ok(unrecognizedHash === SecurePassword.INVALID_UNRECOGNIZED_HASH)
-  t.assert.ok(unrecognizedHash !== SecurePassword.INVALID)
-  t.assert.ok(unrecognizedHash !== SecurePassword.VALID)
-  t.assert.ok(unrecognizedHash !== SecurePassword.VALID_NEEDS_REHASH)
+  t.assert.strictEqual(unrecognizedHash, SecurePassword.INVALID_UNRECOGNIZED_HASH)
+  t.assert.notStrictEqual(unrecognizedHash, SecurePassword.INVALID)
+  t.assert.notStrictEqual(unrecognizedHash, SecurePassword.VALID)
+  t.assert.notStrictEqual(unrecognizedHash, SecurePassword.VALID_NEEDS_REHASH)
 })
 
 test('Can handle invalid hash async', /** @param {TestContext} t */ async (t) => {
@@ -157,8 +157,8 @@ test('Can handle invalid hash async', /** @param {TestContext} t */ async (t) =>
 
   const unrecognizedHash = await pwd.verify(userPassword, invalidHash)
 
-  t.assert.ok(unrecognizedHash === SecurePassword.INVALID_UNRECOGNIZED_HASH)
-  t.assert.ok(unrecognizedHash !== SecurePassword.INVALID)
-  t.assert.ok(unrecognizedHash !== SecurePassword.VALID)
-  t.assert.ok(unrecognizedHash !== SecurePassword.VALID_NEEDS_REHASH)
+  t.assert.strictEqual(unrecognizedHash, SecurePassword.INVALID_UNRECOGNIZED_HASH)
+  t.assert.notStrictEqual(unrecognizedHash, SecurePassword.INVALID)
+  t.assert.notStrictEqual(unrecognizedHash, SecurePassword.VALID)
+  t.assert.notStrictEqual(unrecognizedHash, SecurePassword.VALID_NEEDS_REHASH)
 })
