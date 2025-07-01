@@ -1,100 +1,86 @@
 # `secure-password`
 
-[![Build Status](https://travis-ci.org/emilbayes/secure-password.svg?branch=master)](https://travis-ci.org/emilbayes/secure-password)
-[![Build status](https://ci.appveyor.com/api/projects/status/a1atq7xypwf3ebfc/branch/master?svg=true)](https://ci.appveyor.com/project/emilbayes/secure-password/branch/master)
-
 > Making Password storage safer for all
+
+## Breaking changes in v5
+
+- Only supports Node.js `^20.15.0 || >=22.2.0` and later.
+- Only supports ESM (`import { SecurePassword } from 'secure-password'`).
+- All async APIs are now Promise-only (no callback support).
+- `SecurePassword` must be constructed with `new`.
+- Constants are named exports, not static properties.
 
 ## Features
 
-- State of the art password hashing algorithm (Argon2id)
-- Safe defaults for most applications
-- Future-proof so work factors and hashing algorithms can be easily upgraded
-- `Buffers` everywhere for safer memory management
+- State of the art password hashing algorithm (Argon2id, via sodium-native)
+- Safe, modern defaults for most applications
+- Future-proof: easily upgrade work factors and algorithms
+- `Buffer`-only API for safe memory handling
+- 100% code and type coverage, robust error handling
+
+## Install
+
+```sh
+npm install secure-password
+```
 
 ## Usage
 
 ```js
-var securePassword = require('secure-password')
+import {
+  SecurePassword,
+  INVALID_UNRECOGNIZED_HASH,
+  INVALID,
+  VALID_NEEDS_REHASH,
+  VALID,
+} from 'secure-password'
 
-// Initialise our password policy
-var pwd = securePassword()
-
-var userPassword = Buffer.from('my secret password')
-
-// Register user
-pwd.hash(userPassword, function (err, hash) {
-  if (err) throw err
-
-  // Save hash somewhere
-  pwd.verify(userPassword, hash, function (err, result) {
-    if (err) throw err
-    
-    switch (result) {
-      case securePassword.INVALID_UNRECOGNIZED_HASH:
-        return console.error('This hash was not made with secure-password. Attempt legacy algorithm')
-      case securePassword.INVALID:
-        return console.log('Invalid password')
-      case securePassword.VALID:
-        return console.log('Authenticated')
-      case securePassword.VALID_NEEDS_REHASH:
-        console.log('Yay you made it, wait for us to improve your safety')
-
-        pwd.hash(userPassword, function (err, improvedHash) {
-          if (err) console.error('You are authenticated, but we could not improve your safety this time around')
-
-          // Save improvedHash somewhere
-        })
-        break
-    }
-  })
-})
-```
-
-or with async await:
-
-
-```js
-const securePassword = require('secure-password')
-
-// Initialise our password policy
-const pwd = securePassword()
-
+const pwd = new SecurePassword()
 const userPassword = Buffer.from('my secret password')
 
-async function run () {
-  // Register user
-  const hash = await pwd.hash(userPassword)
+// Generate user password hash and save somewhere
+const hash = await pwd.hash(userPassword)
 
-  // Save hash somewhere
-  const result = await pwd.verify(userPassword, hash)
-  
-  switch (result) {
-    case securePassword.INVALID_UNRECOGNIZED_HASH:
-      return console.error('This hash was not made with secure-password. Attempt legacy algorithm')
-    case securePassword.INVALID:
-      return console.log('Invalid password')
-    case securePassword.VALID:
-      return console.log('Authenticated')
-    case securePassword.VALID_NEEDS_REHASH:
-      console.log('Yay you made it, wait for us to improve your safety')
+// ... later somewhere else in the code:
 
-      try {
-        const improvedHash = await pwd.hash(userPassword)
-        // Save improvedHash somewhere
-      } catch (err) {
-        console.error('You are authenticated, but we could not improve your safety this time around')
-      }
-      break
-  }
+// Validate provided password against a hash
+const result = await pwd.verify(userPassword, hash)
+
+switch (result) {
+  case INVALID_UNRECOGNIZED_HASH:
+    throw new Error('This hash was not made with secure-password. Attempt legacy algorithm')
+    break
+  case INVALID:
+    throw new Error('Invalid password')
+    break
+  case VALID:
+    console.log('Authenticated')
+    break
+  case VALID_NEEDS_REHASH:
+    console.log('Authenticated, but needs rehash')
+
+    try {
+    // We can only rehash when we have the userPassword at hands,
+    // so we should seize the opportunity...
+      const improvedHash = await pwd.hash(userPassword)
+      // ...and replace the old hash with the improvedHash where its stored
+    } catch (err) {
+      console.error('You are authenticated, but we could not improve your safety this time around')
+    }
+    break
 }
-
-run()
 ```
+
+
+## Types
+
+Type definitions are generated when published.
+All result symbols and options are typed.
+
 
 ## API
 
-### `var pwd = new SecurePassword(opts)`
+### `new SecurePassword([opts])`
 
 Make a new instance of `SecurePassword` which will contain your settings. You
 can view this as a password policy for your application. `opts` takes the
@@ -102,142 +88,150 @@ following keys:
 
 ```js
 // Initialise our password policy (these are the defaults)
-var pwd = securePassword({
-  memlimit: securePassword.MEMLIMIT_DEFAULT,
-  opslimit: securePassword.OPSLIMIT_DEFAULT
+const pwd = new SecurePassword({
+  memlimit: MEMLIMIT_DEFAULT,
+  opslimit: OPSLIMIT_DEFAULT,
 })
 ```
 
-They're both constrained by the constants `SecurePassword.MEMLIMIT_MIN` -
- `SecurePassword.MEMLIMIT_MAX` and
-`SecurePassword.OPSLIMIT_MIN` - `SecurePassword.OPSLIMIT_MAX`. If not provided
-they will be given the default values `SecurePassword.MEMLIMIT_DEFAULT` and
-`SecurePassword.OPSLIMIT_DEFAULT` which should be fast enough for a general
-purpose web server without your users noticing too much of a load time. However
-your should set these as high as possible to make any kind of cracking as costly
-as possible. A load time of 1s seems reasonable for login, so test various
+- `memlimit` (number, default: `MEMLIMIT_DEFAULT`)
+  - Memory limit for Argon2id in bytes. Higher is safer, but slower.
+- `opslimit` (number, default: `OPSLIMIT_DEFAULT`)
+  - Number of Argon2id iterations. Higher is safer, but slower.
+
+They're both constrained by the constants `MEMLIMIT_MIN` to `MEMLIMIT_MAX` and
+`OPSLIMIT_MIN` to `OPSLIMIT_MAX`. If not provided, they will be given the default
+values `MEMLIMIT_DEFAULT` and `OPSLIMIT_DEFAULT` which should be fast enough for
+a general purpose web server without your users noticing too much of a load time.
+
+However, you should set these as high as possible to make any kind of cracking as
+costly as possible. A load time of 1s seems reasonable for login, so test various
 settings in your production environment.
 
 The settings can be easily increased at a later time as hardware most likely
-improves (Moore's law) and adversaries therefore get more powerful. If a hash is
-attempted verified with weaker parameters than your current settings, you get a
-special return code signalling that you need to rehash the plaintext password
-according to the updated policy. In contrast to other modules, this module will
-not increase these settings automatically as this can have ill effects on
-services that are not carefully monitored.
+improves (Moore's law) and adversaries therefore get more powerful.
 
-### `pwd.hash(password, [function (err, hash) {}])`
+If a hash is attempted verified with weaker parameters than your current settings,
+you get a special return code signalling that you need to rehash the plaintext
+password according to the updated policy.
 
-Takes Buffer `password` and hashes it. You can call `cancel` to abort the hashing.
+In contrast to other modules, this module will not increase these settings
+automatically as this can have ill effects on services that are not carefully
+monitored.
 
+### `await pwd.hash(passwordBuf)`
+
+Takes Buffer `passwordBuf` and hashes it. Returns a Buffer with the hash.
 The hashing is done by a seperate worker as to not block the event loop,
 so normal execution and I/O can continue. The callback is invoked with a
 potential error, or the Buffer `hash`.
 
-* `password` must be a Buffer of length `SecurePassword.PASSWORD_BYTES_MIN` - `SecurePassword.PASSWORD_BYTES_MAX`.  
-* `hash` will be a Buffer of length `SecurePassword.HASH_BYTES`.
+- `passwordBuf` must be a Buffer of length between `PASSWORD_BYTES_MIN` and
+  `PASSWORD_BYTES_MAX`.
+- Returns a Buffer of length `HASH_BYTES`.
+- Throws if input is invalid or hashing encounters an error.
 
-If a callback is not specified, a `Promise` is returned.
+### `pwd.hashSync(passwordBuf)`
 
-### `var hash = pwd.hashSync(password)`
-
-Takes Buffer `password` and hashes it. The hashing is done on the same thread as
+Same as `pwd.hash()`, but the hashing is done on the same thread as
 the event loop, therefore normal execution and I/O will be blocked.
-The function may `throw` a potential error, but most likely return
-the Buffer `hash`.
 
-`password` must be a Buffer of length `SecurePassword.PASSWORD_BYTES_MIN` - `SecurePassword.PASSWORD_BYTES_MAX`.  
-`hash` will be a Buffer of length `SecurePassword.HASH_BYTES`.
+### `await pwd.verify(passwordBuf, hashBuf)`
 
-### `pwd.verify(password, hash, [function (err, enum) {}])`
 
-Takes Buffer `password` and hashes it and then safely compares it to the
-Buffer `hash`. The hashing is done by a seperate worker as to not block the
-event loop, so normal execution and I/O can continue.
-The callback is invoked with a potential error, or one of the symbols
-`SecurePassword.INVALID`, `SecurePassword.VALID`, `SecurePassword.NEEDS_REHASH` or `SecurePassword.INVALID_UNRECOGNIZED_HASH`.
-Check with strict equality for one the cases as in the example above.
+Takes `passwordBuf`, hashes it and then safely compares it to the `hashBuf`.
+The hashing is done by a seperate worker as to not block the event loop, so
+normal execution and I/O can continue.
 
-If `enum === SecurePassword.NEEDS_REHASH` you should call `pwd.hash` with
-`password` and save the new `hash` for next time. Be careful not to introduce a
-bug where a user trying to login multiple times, successfully, in quick succession
-makes your server do unnecessary work.
+Returns one of the symbols `INVALID`, `VALID`, `VALID_NEEDS_REHASH` or `INVALID_UNRECOGNIZED_HASH`.
 
-`password` must be a Buffer of length `SecurePassword.PASSWORD_BYTES_MIN` - `SecurePassword.PASSWORD_BYTES_MAX`.  
-`hash` will be a Buffer of length `SecurePassword.HASH_BYTES`.
+If `VALID_NEEDS_REHASH` is returned you should call `pwd.hash(passwordBuf)` to
+generate a new hash and replace the old hash with the new one in your persistent
+storage.
 
-If a callback is not specified, a `Promise` is returned.
+> [!TIP]
+> Be careful not to introduce a bug where a user trying to login multiple times,
+> successfully, in quick succession, makes your server do unnecessary work.
 
-### `var enum = pwd.verifySync(password, hash)`
+- `passwordBuf` must be a Buffer of length between `PASSWORD_BYTES_MIN` and
+  `PASSWORD_BYTES_MAX`.
+- `hashBuf` must be a Buffer of length `HASH_BYTES`.
+- Throws if input is invalid or verification encounters an error.
 
-Takes Buffer `password` and hashes it and then safely compares it to the
-Buffer `hash`. The hashing is done on the same thread as the event loop,
-therefore normal execution and I/O will be blocked.
-The function may `throw` a potential error, or return one of the symbols
-`SecurePassword.VALID`, `SecurePassword.INVALID`, `SecurePassword.NEEDS_REHASH` or `SecurePassword.INVALID_UNRECOGNIZED_HASH`.
-Check with strict equality for one the cases as in the example above.
+### `pwd.verifySync(passwordBuf, hashBuf)`
 
-### `SecurePassword.VALID`
+Same as `pwd.verify()`, but the verification is done on the same thread as
+the event loop, therefore normal execution and I/O will be blocked.
+
+### Constants
+
+All constants are named exports:
+- `HASH_BYTES`, `PASSWORD_BYTES_MIN`, `PASSWORD_BYTES_MAX`,
+  `MEMLIMIT_MIN`, `MEMLIMIT_MAX`, `OPSLIMIT_MIN`, `OPSLIMIT_MAX`,
+  `MEMLIMIT_DEFAULT`, `OPSLIMIT_DEFAULT`
+
+### Verification result symbols
+
+- `VALID`: Password is correct
+- `VALID_NEEDS_REHASH`: Password is correct, but hash should be upgraded
+- `INVALID`: Password is incorrect
+- `INVALID_UNRECOGNIZED_HASH`: Hash is not recognized as secure-password
+
+### `VALID`
 
 The password was verified and is valid
 
-### `SecurePassword.INVALID`
+### `INVALID`
 
 The password was invalid
 
-### `SecurePassword.VALID_NEEDS_REHASH`
+### `VALID_NEEDS_REHASH`
 
 The password was verified and is valid, but needs to be rehashed with new
 parameters
 
-### `SecurePassword.INVALID_UNRECOGNIZED_HASH`
+### `INVALID_UNRECOGNIZED_HASH`
 
 The hash was unrecognized and therefore could not be verified.
 As an implementation detail it is currently very cheap to attempt verifying
 unrecognized hashes, since this only requires some lightweight pattern matching.
 
-### `SecurePassword.HASH_BYTES`
+### `HASH_BYTES`
 
 Size of the `hash` Buffer returned by `hash` and `hashSync` and used by `verify`
 and `verifySync`.
 
-### `SecurePassword.PASSWORD_BYTES_MIN`
+### `PASSWORD_BYTES_MIN`
 
 Minimum length of the `password` Buffer.
 
-### `SecurePassword.PASSWORD_BYTES_MAX`
+### `PASSWORD_BYTES_MAX`
 
 Maximum length of the `password` Buffer.
 
-### `SecurePassword.MEMLIMIT_MIN`
+### `MEMLIMIT_MIN`
 
 Minimum value for the `opts.memlimit` option.
 
-### `SecurePassword.MEMLIMIT_MAX`
+### `MEMLIMIT_MAX`
 
 Maximum value for the `opts.memlimit` option.
 
-### `SecurePassword.OPSLIMIT_MIN`
+### `OPSLIMIT_MIN`
 
 Minimum value for the `opts.opslimit` option.
 
-### `SecurePassword.OPSLIMIT_MAX`
+### `OPSLIMIT_MAX`
 
 Maximum value for the `opts.opslimit` option.
 
-### `SecurePassword.MEMLIMIT_DEFAULT`
+### `MEMLIMIT_DEFAULT`
 
 Default value for the `opts.memlimit` option.
 
-### `SecurePassword.OPSLIMIT_DEFAULT`
+### `OPSLIMIT_DEFAULT`
 
 Minimum value for the `opts.opslimit` option.
-
-## Install
-
-```sh
-npm install secure-password
-```
 
 ## Credits
 
