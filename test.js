@@ -162,3 +162,83 @@ test('Can handle invalid hash async', /** @param {TestContext} t */ async (t) =>
   t.assert.notStrictEqual(unrecognizedHash, SecurePassword.VALID)
   t.assert.notStrictEqual(unrecognizedHash, SecurePassword.VALID_NEEDS_REHASH)
 })
+
+test('Verify async returns INVALID if password is wrong', /** @param {TestContext} t */ async (t) => {
+  const pwd = new SecurePassword()
+
+  const userPassword = Buffer.from('my secret')
+  const wrongPassword = Buffer.from('not the secret')
+
+  const passwordHash = await pwd.hash(userPassword)
+  const result = await pwd.verify(wrongPassword, passwordHash)
+
+  t.assert.strictEqual(result, SecurePassword.INVALID)
+})
+
+test('Verify async returns VALID_NEEDS_REHASH if hash needs rehash', /** @param {TestContext} t */ async (t) => {
+  // Create a hash with intentionally lower (weak) parameters...
+  const weakPwd = new SecurePassword({
+    memlimit: SecurePassword.MEMLIMIT_MIN, // intentionally as low as allowed
+    opslimit: SecurePassword.OPSLIMIT_MIN, // intentionally as low as allowed
+  })
+
+  const userPassword = Buffer.from('my secret')
+  const weakHash = await weakPwd.hash(userPassword)
+
+  // ...then verify with stricter (stronger) params
+  const betterPwd = new SecurePassword({
+    memlimit: SecurePassword.MEMLIMIT_DEFAULT + 1024, // higher than default
+    opslimit: SecurePassword.OPSLIMIT_DEFAULT + 1,    // higher than default
+  })
+
+  const result = await betterPwd.verify(userPassword, weakHash)
+
+  t.assert.strictEqual(result, SecurePassword.VALID_NEEDS_REHASH)
+})
+
+// *** Assert tests ***
+
+test('Verify async throws if passwordBuf is not a Buffer', async (t) => {
+  const pwd = new SecurePassword()
+  await t.assert.rejects(
+    // @ts-expect-error: Intentionally passing a string to test runtime assertion for non-Buffer input
+    () => pwd.verify('not-a-buffer', Buffer.alloc(SecurePassword.HASH_BYTES)),
+    /passwordBuf must be Buffer/
+  )
+})
+
+test('Verify async throws if passwordBuf is too short', async (t) => {
+  const min = Math.max(0, SecurePassword.PASSWORD_BYTES_MIN - 1)
+  if (min > 0) {
+    const pwd = new SecurePassword()
+    await t.assert.rejects(
+      () => pwd.verify(Buffer.alloc(min), Buffer.alloc(SecurePassword.HASH_BYTES)),
+      /passwordBuf must be at least PASSWORD_BYTES_MIN/
+    )
+  }
+})
+
+test('Verify async throws if passwordBuf is too long', async (t) => {
+  const pwd = new SecurePassword()
+  await t.assert.rejects(
+    () => pwd.verify(Buffer.alloc(SecurePassword.PASSWORD_BYTES_MAX + 1), Buffer.alloc(SecurePassword.HASH_BYTES)),
+    /passwordBuf must be shorter than PASSWORD_BYTES_MAX/
+  )
+})
+
+test('Verify async throws if hashBuf is not a Buffer', async (t) => {
+  const pwd = new SecurePassword()
+  await t.assert.rejects(
+    // @ts-expect-error: Intentionally passing a string as hashBuf to test runtime assertion for non-Buffer input
+    () => pwd.verify(Buffer.alloc(SecurePassword.PASSWORD_BYTES_MIN), 'not-a-buffer'),
+    /hashBuf must be Buffer/
+  )
+})
+
+test('Verify async throws if hashBuf is wrong length', async (t) => {
+  const pwd = new SecurePassword()
+  await t.assert.rejects(
+    () => pwd.verify(Buffer.alloc(SecurePassword.PASSWORD_BYTES_MIN), Buffer.alloc(1)),
+    /hashBuf must be HASH_BYTES/
+  )
+})
