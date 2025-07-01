@@ -231,7 +231,7 @@ Default value for the `opts.memlimit` option.
 
 ### `OPSLIMIT_DEFAULT`
 
-Minimum value for the `opts.opslimit` option.
+Default value for the `opts.opslimit` option.
 
 ## Credits
 
